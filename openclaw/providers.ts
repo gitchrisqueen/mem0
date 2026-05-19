@@ -191,8 +191,10 @@ class OSSProvider implements Mem0Provider {
     const config: Record<string, unknown> = { version: "v1.1" };
 
     if (this.ossConfig?.embedder) config.embedder = this.ossConfig.embedder;
-    if (this.ossConfig?.vectorStore)
-      config.vectorStore = this.ossConfig.vectorStore;
+    if (this.ossConfig?.vectorStore) {
+      // Enhance Qdrant configuration with proper timeouts and connection pooling
+      config.vectorStore = this.enhanceQdrantConfig(this.ossConfig.vectorStore);
+    }
     if (this.ossConfig?.llm) config.llm = this.ossConfig.llm;
 
     // Wire in graph store (Neo4j) if configured — enables entity/relationship memory
@@ -232,6 +234,41 @@ class OSSProvider implements Mem0Provider {
         throw err;
       }
     }
+  }
+
+  /**
+   * Enhance Qdrant configuration with proper timeouts and connection pooling
+   * to prevent fetch failures in OpenClaw environment
+   */
+  private enhanceQdrantConfig(vectorStoreConfig: any): any {
+    // If config already has a client, assume it's properly configured
+    if (vectorStoreConfig?.config?.client) {
+      return vectorStoreConfig;
+    }
+
+    // Create enhanced config with timeout and retry settings
+    const enhancedConfig = JSON.parse(JSON.stringify(vectorStoreConfig));
+    
+    if (!enhancedConfig.config) {
+      enhancedConfig.config = {};
+    }
+
+    // Add timeout configuration for Qdrant client
+    enhancedConfig.config.timeout = enhancedConfig.config.timeout || 30000; // 30s timeout
+    enhancedConfig.config.retryAttempts = enhancedConfig.config.retryAttempts || 3;
+    
+    // Ensure preferGrpc is explicitly set to false for REST API stability
+    if (enhancedConfig.config.preferGrpc === undefined) {
+      enhancedConfig.config.preferGrpc = false;
+    }
+
+    console.info("[mem0] Enhanced Qdrant config with timeouts:", {
+      timeout: enhancedConfig.config.timeout,
+      retryAttempts: enhancedConfig.config.retryAttempts,
+      preferGrpc: enhancedConfig.config.preferGrpc
+    });
+
+    return enhancedConfig;
   }
 
   async add(

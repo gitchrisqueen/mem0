@@ -64,7 +64,7 @@ function categoriesToArray(
   return Object.entries(cats).map(([key, value]) => ({ [key]: value }));
 }
 
-const AUTO_CAPTURE_TIMEOUT_MS = 20_000;
+const AUTO_CAPTURE_TIMEOUT_MS = 30_000; // Increased from 20s to 30s to match Qdrant timeout
 
 async function withTimeout<T>(
   promise: Promise<T>,
