@@ -17,6 +17,13 @@ const NOISE_MESSAGE_PATTERNS: RegExp[] = [
   /^(ok|yes|no|sir|sure|thanks|done|good|nice|cool|got it|it's on|continue)$/i,
   /^System: \[.*\] (Slack message edited|Gateway restart|Exec (failed|completed))/,
   /^System: \[.*\] ⚠️ Post-Compaction Audit:/,
+  // Ephemeral ClawTeam process-state — task-count snapshots and "nothing changed"
+  // status lines. These are transient, not durable facts, and were polluting mem0.
+  /^(there (are|were) )?(a )?total (of )?\d+ tasks?\b/i,
+  /^task counts?\b.*\b(total|pending|in[_ ]progress|completed)\b/i,
+  /^no (new )?(board )?(updates?|handoffs?|changes?|messages?|action)\b.*\b(needed|required|necessary|to (report|process|take)|were (needed|required))\b/i,
+  /^(an? )?inbox (note|message|handoff) (was )?(sent|delivered|processed|received)\b/i,
+  /^the (leader|owner) of (the )?[a-z0-9-]+ team is [a-z0-9-]+\.?$/i,
 ];
 
 /** Content fragments that should be stripped from otherwise-valid messages. */

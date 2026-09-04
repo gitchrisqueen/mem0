@@ -100,10 +100,21 @@ export function extractAgentId(sessionKey: string | undefined): string | undefin
 }
 
 /**
+ * Shared-namespace mode (enabled 2026-06-21).
+ * When true, all agents read/write a SINGLE base namespace ("quin") instead of
+ * per-agent silos, so durable facts captured by one agent are recalled by every
+ * agent. Previously each non-main agent wrote to "quin:agent:<id>", which left
+ * 82% of memories siloed and unrecallable across agents. Set to false to restore
+ * per-agent isolation. Explicit agentId/userId passed to tools still override.
+ */
+const SHARED_NAMESPACE = true;
+
+/**
  * Derive the effective user_id from a session key, namespacing per-agent.
  * Falls back to baseUserId when the session is not agent-scoped.
  */
 export function effectiveUserId(baseUserId: string, sessionKey?: string): string {
+  if (SHARED_NAMESPACE) return baseUserId;
   const agentId = extractAgentId(sessionKey);
   return agentId ? `${baseUserId}:agent:${agentId}` : baseUserId;
 }
